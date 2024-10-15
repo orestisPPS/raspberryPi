@@ -57,8 +57,8 @@ class Measurement(ABC):
         self.measurementType = None
         self.unitType = None
         self.value = None
-        self.burstValues = None
-        self.supportedUnits = []
+        self.burstValues = [None]
+        self.supportedUnits = [None]
         self.colour = Colour.RESET
 
     @abstractmethod
@@ -76,8 +76,11 @@ class Measurement(ABC):
             return None
         return self.convert_value(self.burstValues, unitType)
 
-    def setValue(self, value: float) -> None:
-        self.value = value
+    def setValue(self, value: float, isBurst: bool) -> None:
+        if isBurst:
+            self.burstValues.append(value)
+        else:
+            self.value = value
 
     def printValue(self, unitType: MeasurementUnitType = None, useShortName: bool = False) -> None:
         """Print the value in the specified unit."""

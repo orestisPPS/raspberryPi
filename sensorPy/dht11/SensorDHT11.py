@@ -6,6 +6,8 @@ class DHT11(Sensor, TemperatureSensor, RelativeHumiditySensor):
         self.device = adafruit_dht.DHT11(pin)
         self.name = "DHT11"
 
-    def measure(self):
-        self.temperature.setValue(self.device.temperature)
-        self.relativeHumidity.setValue(self.device.humidity)
+    def _measure(self):
+        self._tempMeasurementValues = {
+            self.temperature: self.device.temperature,
+            self.relativeHumidity: self.device.humidity
+        }

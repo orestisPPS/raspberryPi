@@ -7,7 +7,9 @@ class DHT22(Sensor, TemperatureSensor, RelativeHumiditySensor):
         self.device = adafruit_shtc3.SHTC3(pin)
         self.name = "SHTC3"
 
-    def measure(self):
+    def _measure(self):
         t, rh = self.device.measurements
-        self.temperature.setValue(t)
-        self.relativeHumidity.setValue(rh)
+        self._tempMeasurementValues = {
+            self.temperature: t,
+            self.relativeHumidity: rh
+        }

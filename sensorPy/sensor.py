@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from SensorMeasurements import Temperature, RelativeHumidity, Pressure, MeasurementUnitType, Colour
+from SensorMeasurements import Temperature, RelativeHumidity, Pressure, UnitType, Colour
 import time
 import board
 
@@ -22,8 +22,7 @@ def burstMeasure(self, burstNum: int = 1, burstInterval: float = 2.0, burstDelay
     if burstDelay < 0: raise ValueError("burstDelay must be greater than or equal to 0")
     if consolePrint: _printName()
     for i in range(burstNum):
-        results = self._measure()
-        self._setMeasurementValues(results, isBurst=True)
+        self._setMeasurementValues(self._measure(), isBurst=True)
         time.sleep(burstInterval)
     if consolePrint: self._printMeasurements(isBurst=True)
     time.sleep(burstDelay)
@@ -54,30 +53,25 @@ def _resetBurstValues(self) -> None:
 def _measure(self) -> None:
     pass
 
-class TemperatureSensor(Sensor):
-    def __init__(self):
-        self.device = None
-        self.temperature = Temperature()
-        self.measurements.append(self.temperature)
 
-    def measure(self):
-        pass
 
-class RelativeHumiditySensor(Sensor):
-    def __init__(self):
-        self.device = None
-        self.relativeHumidity = RelativeHumidity()
-        self.measurements.append(self.relativeHumidity)
 
-    def measure(self):
-        pass
+    def printValue(self, unitType: UnitType = None, useShortName: bool = False) -> None:
+        """Print the value in the specified unit."""
+        value, unit = self.getValue(unitType)
+        self._print(value, unit, useShortName)
 
-class PressureSensor(Sensor):
-    def __init__(self):
-        self.device = None
-        self.pressure = Pressure()
-        self.measurements.append(self.pressure)
+    def printBurstValues(self, unitType: UnitType = None, useShortName: bool = False) -> None:
+        """Print the burst value in the specified unit."""
+        burstValues = self.getBurstValues(unitType)
+        if burstValues is None:
+            return
+        value, unit = burstValues
+        self._print(value, unit, useShortName)
 
-    def measure(self):
-        pass
-
+    def _print(self, value: float, unit: UnitType, useShortName: bool) -> None:
+        """Helper method to handle printing the values in the specified unit."""
+        name = self.type.getShortName if useShortName else self.type.name
+        colourCode = self.colour.getCode
+        resetCode = Colour.RESET.getCode
+        print(f"{colourCode}{name} : {resetCode}{value} {colourCode}[{unit.get}]{resetCode}")

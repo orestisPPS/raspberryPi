@@ -6,7 +6,7 @@ import adafruit_dht
 dhtDevice = adafruit_dht.DHT22(board.D6)
 
 while True:
-    try:
+    try
         # Print the values to the serial port
         temperature_c = dhtDevice.temperature
         temperature_f = temperature_c * (9 / 5) + 32

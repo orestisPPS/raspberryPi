@@ -1,241 +1,239 @@
-from enum import Enum
+from enum import Enum, EnumMeta
 from abc import ABC, abstractmethod
+import time
 
 class MeasurementType(Enum):
     Temperature = "T"
     RelativeHumidity = "RH"
     Pressure = "P"
+    Distance = "D"
+    Time = "t"
 
-    @property
-    def getShortName(self):
-        return self.value
-
-class UnitBase(Enum, ABC):
+class UnitBase(ABC):
     @abstractmethod
     def convert_value(self, value: float, target_unit: 'UnitBase') -> tuple:
         """Convert value to the requested unit."""
         pass
 
-    @property
-    @abstractmethod
-    def get(self):
-        """Get the unit symbol."""
-        pass
+    def getName(self):
+        """Get the unit name string."""
+        return self.name
 
     @property
-    def get(self):
+    def getSymbol(self):
         return self.value
-        
-class UnitType(Enum):
 
-    Meter = "m",         
-    Gram = "g"         
-    Second = "s"       
-    Ampere = "A"        
-    Kelvin = "K"        
-    Candela = "cd"      
-    Hertz = "Hz"       
-    Newton = "N"       
-    Pascal = "Pa"      
-    Joule = "J"        
-    Watt = "W"         
-    Coulomb = "C"       
-    Volt = "V"          
-    Farad = "F"        
-    Ohm = "Ω"           
-    Siemens = "S"       
-    Weber = "Wb"        
-    Henry = "H"        
-    Lumen = "lm"        
-    Lux = "lx"         
+    def _throwUnsupportedUnitError(self, unit: 'UnitBase', supported_units: list) -> None:
+        raise ValueError(f"Unsupported unit type: {unit}. Supported unit types are: {supported_units}")
 
+class TemperatureUnit(UnitBase):
     Celsius = "°C"
     Fahrenheit = "°F"
+    Kelvin = "K"
+
+    def convert_value(self, value: float, target_unit: 'TemperatureUnit') -> tuple:
+        """Convert temperature to the requested unit."""
+        if target_unit == self.Celsius:
+            return value, target_unit
+        elif target_unit == self.Fahrenheit:
+            return value * 9/5 + 32, target_unit
+        elif target_unit == self.Kelvin:
+            return value + 273.15, target_unit
+        else:
+            self._throwUnsupportedUnitError(target_unit, [self.Celsius, self.Fahrenheit, self.Kelvin])
+
+class RelativeHumidityUnit(UnitBase):
     Percent = "%"
+
+    def convert_value(self, value: float, target_unit: 'RelativeHumidityUnit') -> tuple:
+        """Convert relative humidity to the requested unit (no conversion needed)."""
+        if target_unit == self.Percent:
+            return value, target_unit
+        else:
+            self._throwUnsupportedUnitError(target_unit, [self.Percent])
+
+class PressureUnit(UnitBase):
+    Hectopascal = "hPa"
+    Pascal = "Pa"
     MillimeterOfMercury = "mmHg"
     InchOfMercury = "inHg"
     Bar = "bar"
     Atmosphere = "atm"
 
-    @property
-    def get(self):
-        return self.value
+    def convert_value(self, value: float, target_unit: 'PressureUnit') -> tuple:
+        """Convert pressure to the requested unit."""
+        if target_unit == self.Pascal:
+            return value, target_unit
+        elif target_unit == self.Hectopascal:
+            return value / 100, target_unit
+        elif target_unit == self.MillimeterOfMercury:
+            return value * 0.75006375541921, target_unit
+        elif target_unit == self.InchOfMercury:
+            return value * 0.029529983071445, target_unit
+        elif target_unit == self.Bar:
+            return value / 1000, target_unit
+        elif target_unit == self.Atmosphere:
+            return value / 1013.25, target_unit
+        else:
+            self._throwUnsupportedUnitError(target_unit, [self.Pascal, self.Hectopascal, self.MillimeterOfMercury, self.InchOfMercury, self.Bar, self.Atmosphere])
+
+class DistanceUnit(UnitBase):
+    Meter = "m"
+    Kilometer = "km"
+    Centimeter = "cm"
+    Millimeter = "mm"
+    Inch = "in"
+    Foot = "ft"
+    Yard = "yd"
+
+    def convert_value(self, value: float, target_unit: 'DistanceUnit') -> tuple:
+        """Convert distance to the requested unit."""
+        if target_unit == self.Meter:
+            return value, target_unit
+        elif target_unit == self.Kilometer:
+            return value / 1000, target_unit
+        elif target_unit == self.Centimeter:
+            return value * 100, target_unit
+        elif target_unit == self.Millimeter:
+            return value * 1000, target_unit
+        elif target_unit == self.Inch:
+            return value * 39.3701, target_unit
+        elif target_unit == self.Foot:
+            return value * 3.28084, target_unit
+        elif target_unit == self.Yard:
+            return value * 1.09361, target_unit
+        else:
+            self._throwUnsupportedUnitError(target_unit, [self.Meter, self.Kilometer, self.Centimeter, self.Millimeter, self.Inch, self.Foot, self.Yard])
+
+class TimeUnit(UnitBase):
+    Second = "s"
+    Minute = "min"
+    Hour = "h"
+    Day = "d"
+
+    def convert_value(self, value: float, target_unit: 'TimeUnit') -> tuple:
+        """Convert time to the requested unit."""
+        if target_unit == self.Second:
+            return value, target_unit
+        elif target_unit == self.Minute:
+            return value / 60, target_unit
+        elif target_unit == self.Hour:
+            return value / 3600, target_unit
+        elif target_unit == self.Day:
+            return value / 86400, target_unit
+        else:
+            self._throwUnsupportedUnitError(target_unit, [self.Second, self.Minute, self.Hour, self.Day])
 
 
-class MetricPrefix(Enum):
-    Yocto = "y" , 1e-24
-    Zepto = "z" , 1e-21
-    Atto  = "a" , 1e-18
-    Femto = "f" , 1e-15
-    Pico  = "p" , 1e-12
-    Nano  = "n" , 1e-9
-    Micro = "µ" , 1e-6
-    Milli = "m" , 1e-3
-    Centi = "c" , 1e-2
-    Deci  = "d" , 1e-1
-    Deca  = "da", 1e1
-    Hecto = "h" , 1e2
-    Kilo  = "k" , 1e3
-    Mega  = "M" , 1e6
-    Giga  = "G" , 1e9
-    Tera  = "T" , 1e12
-    Peta  = "P" , 1e15
-    Exa   = "E" , 1e18
-    Zetta = "Z" , 1e21
-    Yotta = "Y" , 1e24
-    
-
-    def __init__(self, symbol):
-        self._symbol = symbol
-        self._factor = {
-            "y": 1e-24, "z": 1e-21, "a": 1e-18, "f": 1e-15, "p": 1e-12, "n": 1e-9, "µ": 1e-6,
-            "m": 1e-3, "c": 1e-2, "d": 1e-1, "da": 1e1, "h": 1e2, "k": 1e3, "M": 1e6, "G": 1e9,
-            "T": 1e12, "P": 1e15, "E": 1e18, "Z": 1e21, "Y": 1e24
-        }[symbol]
-        self._description = {
-            "y": "Yocto", "z": "Zepto", "a": "Atto", "f": "Femto", "p": "Pico", "n": "Nano", "µ": "Micro",
-            "m": "Milli", "c": "Centi", "d": "Deci", "da": "Deca", "h": "Hecto", "k": "Kilo", "M": "Mega",
-            "G": "Giga", "T": "Tera", "P": "Peta", "E": "Exa", "Z": "Zetta", "Y": "Yotta"
-        }[symbol]
-
-    @property
-    def getSymbol(self):
-        return self._symbol
-
-    @property
-    def getFullName(self):
-        return self.name
-
-    @property
-    def getFactor(self):
-        return self._factor
-
-    @property
-    def getDescription(self):
-        return self._description
-    
-    class SIUnit(UnitBase):
-        Meter = "m"        # Distance
-        Gram = "g"         # Mass
-        Second = "s"       # Time
-        Ampere = "A"       # Electric current
-        Kelvin = "K"       # Thermodynamic temperature
-        Candela = "cd"     # Luminous intensity
-        Hertz = "Hz"       # Frequency
-        Newton = "N"       # Force
-        Pascal = "Pa"      # Pressure
-        Joule = "J"        # Energy
-        Watt = "W"         # Power
-        Coulomb = "C"      # Electric charge
-        Volt = "V"         # Electric potential
-        Farad = "F"        # Capacitance
-        Ohm = "Ω"          # Electrical resistance
-        Siemens = "S"      # Electrical conductance
-        Weber = "Wb"       # Magnetic flux
-        Tesla = "T"        # Magnetic flux density
-        Henry = "H"        # Inductance
-        Lumen = "lm"       # Luminous flux
-        Lux = "lx"         # Illuminance
-
-    @property
-    def get(self):
-        return self.value
-
-    class Colour(Enum):
-        RED = ("Red", "\033[91m")
-        GREEN = ("Green", "\033[92m")
-        YELLOW = ("Yellow", "\033[93m")
-        BLUE = ("Blue", "\033[94m")
-        MAGENTA = ("Magenta", "\033[95m")
-        CYAN = ("Cyan", "\033[96m")
-        WHITE = ("White", "\033[97m")
-        ORANGE = ("Orange", "\033[38;5;208m")
-        PURPLE = ("Purple", "\033[38;5;141m")
-        RESET = ("Reset", "\033[0m")
-
+class Colour(Enum):
+    RED = ("Red", "\033[91m")
+    GREEN = ("Green", "\033[92m")
+    YELLOW = ("Yellow", "\033[93m")
+    BLUE = ("Blue", "\033[94m")
+    MAGENTA = ("Magenta", "\033[95m")
+    CYAN = ("Cyan", "\033[96m")
+    WHITE = ("White", "\033[97m")
+    ORANGE = ("Orange", "\033[38;5;208m")
+    PURPLE = ("Purple", "\033[38;5;141m")
+    RESET = ("Reset", "\033[0m")
 
     @property
     def getName(self):
         return self.value[0]
+    
     @property
     def getCode(self):
         return self.value[1].replace("\033[", "").replace("m", "")
-    
-    @property
+
     def print(self, message: str):
-        print(f"{self.value[1]}{message}{Colour.RESET.getCode}")
+        print(f"{self.value[1]}{message}{self.RESET.getCode}")
 
 class MeasurementBase(ABC):
     def __init__(self):
         self.type = None
         self.unit = None
-        self.supportedUnits = [None]
         self.colour = Colour.RESET
         self.value = 0.0
         self.burstValues = []
+        self.avgBurstValue = 0.0
 
-    @abstractmethod
-    def convert_value(self, value: float, type: UnitType = None) -> tuple:
-        """Convert value to the requested unit."""
-        pass
+    def setValue(self, value: float, isBurst: bool) -> None:
+        if isBurst:
+            self.burstValues.append(value)
+        else:
+            self.value = value
 
-    def _throwUnsupportedUnitError(self, unit: UnitType) -> None:
-        raise ValueError(f"Unsupported unit type: {unit}. Supported unit types are: {self.supportedUnits}")
+    def getValue(self, unitType: UnitBase = None) -> tuple:
+        if unitType is None:
+            print(self.value, self.unit)
+            return self.value, self.unit
+        else:
+            return self.unit.convert_value(self.value, unitType)
+
+    def getBurstValues(self, unitType: UnitBase = None) -> list:
+        if unitType is None:
+            return self.burstValues
+        else:
+            convertedValues = []
+            for value in self.burstValues:
+                convertedValues.append(self.unit.convert_value(value, unitType))
+            return convertedValues
+
+    def resetBurstValues(self) -> None:
+        self.burstValues = []
+
+    def printValue(self, unitType: UnitBase = None, useSymbol: bool = False) -> None:
+        """Print the value in the specified unit."""
+        value, unit = self.getValue(unitType)
+        # if useSymbol:
+        #     self.colour.print(f"{value} {unit.getSymbol()}")
+        # else:
+        #     self.colour.print(f"{value} {unit.getName()}")
+
+    def printBurstValues(self, unitType: UnitBase = None, useSymbol: bool = False, printArray: bool = True) -> None:
+        """Print the burst values in the specified unit."""
+        burstValues = self.getBurstValues(unitType)
+        if not burstValues:
+            return
+
+        if printArray:
+            values_str = ', '.join(f"{value[0]}" for value in burstValues)
+            unit_str = unitType.getSymbol() if useSymbol else unitType.getName()
+            print(f"{values_str} {unit_str}")
+        else:
+            for value in burstValues:
+                value_str = f"{value[0]} {value[1].getSymbol()}" if useSymbol else f"{value[0]} {value[1].getName()}"
+                self.colour.print(value_str)
 
 class Temperature(MeasurementBase):
     def __init__(self):
+        super().__init__()
         self.type = MeasurementType.Temperature
-        self.unit = UnitType.Celsius
-        self.supportedUnits = [UnitType.Celsius, UnitType.Fahrenheit, UnitType.Kelvin]
+        self.unit = TemperatureUnit
         self.colour = Colour.ORANGE
-
-    def convert_value(self, value: float, unit: UnitType = None) -> tuple:
-        """Convert temperature from Celsius to the requested unit."""
-        match unit:
-            case None | UnitType.Celsius:
-                return value, self.unit
-            case UnitType.Fahrenheit:
-                return value * 9/5 + 32, unit
-            case UnitType.Kelvin:
-                return value + 273.15, unit
-            case _:
-                self._throwUnsupportedUnitError(unit)
 
 class RelativeHumidity(MeasurementBase):
     def __init__(self):
+        super().__init__()
         self.type = MeasurementType.RelativeHumidity
-        self.unit = UnitType.Percent
-        self.supportedUnits = [UnitType.Percent]
+        self.unit = RelativeHumidityUnit
         self.colour = Colour.BLUE
-
-    def convert_value(self, value: float, unit: UnitType = None) -> tuple:
-        """Convert relative humidity to the requested unit (no conversion needed)."""
-        if unit is UnitType.Percent or unit is None :
-            return value, self.unit
-        else:
-            self._throwUnsupportedUnitError(unit)
 
 class Pressure(MeasurementBase):
     def __init__(self):
+        super().__init__()
         self.type = MeasurementType.Pressure
-        self.unit = UnitType.Hectopascal
-        self.supportedUnits = [UnitType.Hectopascal, UnitType.Pascal, UnitType.MillimeterOfMercury,
-                               UnitType.InchOfMercury, UnitType.Bar, UnitType.Atmosphere]
-        self.colour = Colour.PURPLE
-    def convert_value(self, value: float, unit: UnitType = None) -> tuple:
-        """Convert pressure to the requested unit."""
-        match unit:
-            case None | UnitType.Hectopascal:
-                return value, self.unit
-            case UnitType.Pascal:
-                return value * 100, unit
-            case UnitType.MillimeterOfMercury:
-                return value * 0.75006375541921, unit
-            case UnitType.InchOfMercury:
-                return value * 0.029529983071445, unit
-            case UnitType.Bar:
-                return value / 1000, unit
-            case UnitType.Atmosphere:
-                return value / 1013.25, unit
-            case _:
-                self._throwUnsupportedUnitError(unit)
+        self.unit = PressureUnit
+        self.colour = Colour.GREEN
+
+class Distance(MeasurementBase):
+    def __init__(self):
+        super().__init__()
+        self.unit = DistanceUnit
+        self.colour = Colour.CYAN
+
+class Time(MeasurementBase):
+    def __init__(self):
+        super().__init__()
+        self.unit = TimeUnit
+        self.colour = Colour.YELLOW

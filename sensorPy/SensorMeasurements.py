@@ -1,6 +1,8 @@
 from enum import Enum, EnumMeta
-from abc import ABC, abstractmethod
-import time
+from abc import ABC, ABCMeta, abstractmethod
+
+class CombinedMeta(EnumMeta, ABCMeta):
+    pass
 
 class MeasurementType(Enum):
     Temperature = "T"
@@ -9,20 +11,23 @@ class MeasurementType(Enum):
     Distance = "D"
     Time = "t"
 
-class UnitBase(ABC):
+
+
+class UnitBase(ABC, Enum, metaclass=CombinedMeta):
     @abstractmethod
     def convert_value(self, value: float, target_unit: 'UnitBase') -> tuple:
         """Convert value to the requested unit."""
         pass
-
+    
+    @property
     def getName(self):
         """Get the unit name string."""
         return self.name
-
     @property
     def getSymbol(self):
         return self.value
 
+    @property
     def _throwUnsupportedUnitError(self, unit: 'UnitBase', supported_units: list) -> None:
         raise ValueError(f"Unsupported unit type: {unit}. Supported unit types are: {supported_units}")
 
@@ -31,6 +36,7 @@ class TemperatureUnit(UnitBase):
     Fahrenheit = "°F"
     Kelvin = "K"
 
+    @property
     def convert_value(self, value: float, target_unit: 'TemperatureUnit') -> tuple:
         """Convert temperature to the requested unit."""
         if target_unit == self.Celsius:
@@ -45,6 +51,7 @@ class TemperatureUnit(UnitBase):
 class RelativeHumidityUnit(UnitBase):
     Percent = "%"
 
+    @property
     def convert_value(self, value: float, target_unit: 'RelativeHumidityUnit') -> tuple:
         """Convert relative humidity to the requested unit (no conversion needed)."""
         if target_unit == self.Percent:
@@ -60,6 +67,7 @@ class PressureUnit(UnitBase):
     Bar = "bar"
     Atmosphere = "atm"
 
+    @property
     def convert_value(self, value: float, target_unit: 'PressureUnit') -> tuple:
         """Convert pressure to the requested unit."""
         if target_unit == self.Pascal:
@@ -86,6 +94,7 @@ class DistanceUnit(UnitBase):
     Foot = "ft"
     Yard = "yd"
 
+    @property
     def convert_value(self, value: float, target_unit: 'DistanceUnit') -> tuple:
         """Convert distance to the requested unit."""
         if target_unit == self.Meter:
@@ -111,6 +120,7 @@ class TimeUnit(UnitBase):
     Hour = "h"
     Day = "d"
 
+    @property
     def convert_value(self, value: float, target_unit: 'TimeUnit') -> tuple:
         """Convert time to the requested unit."""
         if target_unit == self.Second:
@@ -165,7 +175,6 @@ class MeasurementBase(ABC):
 
     def getValue(self, unitType: UnitBase = None) -> tuple:
         if unitType is None:
-            print(self.value, self.unit)
             return self.value, self.unit
         else:
             return self.unit.convert_value(self.value, unitType)
@@ -185,10 +194,11 @@ class MeasurementBase(ABC):
     def printValue(self, unitType: UnitBase = None, useSymbol: bool = False) -> None:
         """Print the value in the specified unit."""
         value, unit = self.getValue(unitType)
-        # if useSymbol:
-        #     self.colour.print(f"{value} {unit.getSymbol()}")
-        # else:
-        #     self.colour.print(f"{value} {unit.getName()}")
+        if useSymbol:
+            self.colour.print(f"{value}")
+            self.colour.print(f"{unit.getSymbol()}")
+        else:
+            self.colour.print(f"{value}")
 
     def printBurstValues(self, unitType: UnitBase = None, useSymbol: bool = False, printArray: bool = True) -> None:
         """Print the burst values in the specified unit."""
@@ -209,21 +219,21 @@ class Temperature(MeasurementBase):
     def __init__(self):
         super().__init__()
         self.type = MeasurementType.Temperature
-        self.unit = TemperatureUnit
+        self.unit = TemperatureUnit.Celsius
         self.colour = Colour.ORANGE
 
 class RelativeHumidity(MeasurementBase):
     def __init__(self):
         super().__init__()
         self.type = MeasurementType.RelativeHumidity
-        self.unit = RelativeHumidityUnit
+        self.unit = RelativeHumidityUnit.Percent
         self.colour = Colour.BLUE
 
 class Pressure(MeasurementBase):
     def __init__(self):
         super().__init__()
         self.type = MeasurementType.Pressure
-        self.unit = PressureUnit
+        self.unit = PressureUnit.Hectopascal
         self.colour = Colour.GREEN
 
 class Distance(MeasurementBase):

@@ -1,9 +1,10 @@
 from sensor import Sensor
-from SensorMeasurements import Temperature, RelativeHumidity
+from sensor_measurements import Temperature, RelativeHumidity
 import adafruit_dht
 
 class DHT22(Sensor):
     def __init__(self, pin):
+        super().__init__() 
         self.device = adafruit_dht.DHT22(pin)
         self.name = "DHT22"
         self.temperature = Temperature()

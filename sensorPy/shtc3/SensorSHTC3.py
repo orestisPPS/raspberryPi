@@ -12,8 +12,6 @@ class SHTC3(Sensor):
         self.relativeHumidity = RelativeHumidity()
         self.measurements = [self.temperature, self.relativeHumidity]
 
-    def _measure(self, isBurst: bool) -> None:
-        t, rh = self.device.measurements
-        self.temperature.setValue(t, isBurst)
-        self.relativeHumidity.setValue(rh, isBurst)
+    def _measure(self) -> list:
+        return list(self.device.measurements)
         

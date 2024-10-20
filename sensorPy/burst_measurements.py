@@ -13,9 +13,12 @@ def main():
     # shtc3 = SHTC3()
 
     while True:
-        dht11.measure(consolePrint=True, useSymbol=False)
-        dht22.measure(consolePrint=True, useSymbol=False)
-        bme280.measure(consolePrint=True, useSymbol=False)
+        # dht11.measure(consolePrint=True, useSymbol=False)
+        # dht22.measure(consolePrint=True, useSymbol=False)
+        # bme280.measure(consolePrint=True, useSymbol=False)
+        dht11.burstMeasure(consolePrint=True, useSymbol=False)
+        dht22.burstMeasure(consolePrint=True, useSymbol=False)
+        bme280.burstMeasure(consolePrint=True, useSymbol=False)
         # shtc3.measure(True, True)
         time.sleep(1)
  

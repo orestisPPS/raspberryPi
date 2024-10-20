@@ -2,6 +2,53 @@ from enum import Enum
 from abc import ABC, abstractmethod
 from sensor_units import TemperatureUnit, RelativeHumidityUnit, PressureUnit, DistanceUnit, TimeUnit, UnitType
 
+class Colour(Enum):
+    RED = ("Red", "\033[91m")
+    GREEN = ("Green", "\033[92m")
+    YELLOW = ("Yellow", "\033[93m")
+    BLUE = ("Blue", "\033[94m")
+    MAGENTA = ("Magenta", "\033[95m")
+    CYAN = ("Cyan", "\033[96m")
+    WHITE = ("White", "\033[97m")
+    ORANGE = ("Orange", "\033[38;5;208m")
+    PURPLE = ("Purple", "\033[38;5;141m")
+    GREY = ("Grey", "\033[90m")
+    RESET = ("Reset", "\033[0m")
+
+    def getCode(self):
+        return self.value[1]
+
+class PrintUtil:
+    @staticmethod
+    def printMessage(message: str, colour: Colour) -> None:
+        print(f"{colour.getCode()}{message}{Colour.RESET.getCode()}")
+
+    @staticmethod
+    def printTitle(title: str, colour: Colour) -> None:
+        print("=" * 50)
+        print(f"{colour.getCode()}{title}{Colour.RESET.getCode()}")
+        print("=" * 50)
+
+    @staticmethod
+    def printWarning(message: str) -> None:
+        PrintUtil.printMessage(message, Colour.YELLOW)
+
+    @staticmethod
+    def printException(message: str) -> None:
+        PrintUtil.printMessage(message, Colour.ORANGE)
+
+    @staticmethod
+    def printError(message: str) -> None:
+        PrintUtil.printMessage(message, Colour.RED)
+
+    @staticmethod
+    def printSuccess(message: str) -> None:
+        PrintUtil.printMessage(message, Colour.GREEN)
+
+    @staticmethod
+    def printInfo(message: str) -> None:
+        PrintUtil.printMessage(message, Colour.BLUE)
+
 class MeasurementType(Enum):
     Temperature = ("Temperature", "T", 1)
     RelativeHumidity = ("Relative Humidity", "RH", 2)
@@ -20,35 +67,11 @@ class MeasurementType(Enum):
     def getPriority(self):
         return self.value[2]
 
-class Colour(Enum):
-    RED = ("Red", "\033[91m")
-    GREEN = ("Green", "\033[92m")
-    YELLOW = ("Yellow", "\033[93m")
-    BLUE = ("Blue", "\033[94m")
-    MAGENTA = ("Magenta", "\033[95m")
-    CYAN = ("Cyan", "\033[96m")
-    WHITE = ("White", "\033[97m")
-    ORANGE = ("Orange", "\033[38;5;208m")
-    PURPLE = ("Purple", "\033[38;5;141m")
-    RESET = ("Reset", "\033[0m")
-
-    @property
-    def getName(self) -> str:
-        return self.value[0]
-    
-    @property
-    def getCode(self) -> str:
-        import re
-        return re.sub(r'\033\[(\d+)(;\d+)*m', '', self.value[1])
-
-    def print(self, message: str) -> None:
-        print(f"{self.value[1]}{message}{self.RESET.getCode}")
-
 class MeasurementBase(ABC):
     def __init__(self):
         self.type = MeasurementType.TypeNone
         self.unit = UnitType.TypeNone
-        self.colour = Colour.RESET
+        self.colour = Colour.BLUE
         self.value = 0.0
         self.burstValues = []
         self.avgBurstValue = 0.0
@@ -67,11 +90,11 @@ class MeasurementBase(ABC):
 
     def getBurstValues(self, unitType: UnitType = None) -> list:
         if unitType is None:
-            return self.burstValues
+            return [(value, self.unit) for value in self.burstValues]
         else:
             convertedValues = []
             for value in self.burstValues:
-                convertedValues.append(self.unit.convert_value(value, unitType))
+                convertedValues.append((self.unit.convert_value(value, unitType), unitType))
             return convertedValues
 
     def resetBurstValues(self) -> None:
@@ -83,23 +106,22 @@ class MeasurementBase(ABC):
         string = f"{unit.getSymbol()}" if useSymbol else f"{unit.getType().getSymbol()}"
         label = f"{self.type.getName()}"
         formatted_output = f"{label:<20} : {value:>10.2f}  [{string:<4}]"
-        self.colour.print(formatted_output)
+        PrintUtil.printMessage(formatted_output, self.colour)
 
     
     def printBurstValues(self, unitType: UnitType = None, useSymbol: bool = False, printArray: bool = True) -> None:
-        """Print the burst values in the specified unit."""
-        burstValues = self.getBurstValues(unitType)
-        if not burstValues:
-            return
-
+        """Print the value in the specified unit."""
+        burstData = self.getBurstValues(unitType)
+        values = [value[0] for value in burstData]
+        unit = burstData[0][1]
+        average = sum(values) / len(values)
+        string = f"{unit.getSymbol()}" if useSymbol else f"{unit.getType().getSymbol()}"
+        label = f"{self.type.getName()}"
         if printArray:
-            values_str = ', '.join(f"{value[0]}" for value in burstValues)
-            unit_str = unitType.getSymbol() if useSymbol else unitType.getName()
-            print(f"{values_str} {unit_str}")
+            formatted_output = f"{label:<20} : {average:>10.2f}  [{string:<4}] {values}"
         else:
-            for value in burstValues:
-                value_str = f"{value[0]} {value[1].getSymbol()}" if useSymbol else f"{value[0]} {value[1].getName()}"
-                self.colour.print(value_str)
+            formatted_output = f"{label:<20} : {average:>10.2f}  [{string:<4}]"
+        PrintUtil.printMessage(formatted_output, self.colour)
 
 class Temperature(MeasurementBase):
     def __init__(self):
@@ -120,7 +142,7 @@ class Pressure(MeasurementBase):
         super().__init__()
         self.type = MeasurementType.Pressure
         self.unit = PressureUnit()
-        self.colour = Colour.GREEN
+        self.colour = Colour.PURPLE
 
 class Distance(MeasurementBase):
     def __init__(self):

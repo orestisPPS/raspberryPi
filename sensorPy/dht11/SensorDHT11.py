@@ -11,6 +11,6 @@ class DHT11(Sensor):
         self.relativeHumidity = RelativeHumidity()
         self.measurements = [self.temperature, self.relativeHumidity]
 
-    def _measure(self, isBurst: bool) -> None:
-        self.temperature.setValue(self.device.temperature, isBurst)
-        self.relativeHumidity.setValue(self.device.humidity, isBurst)
+    def _measure(self) -> None:
+        return [self.device.temperature, self.device.humidity]
+

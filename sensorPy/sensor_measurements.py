@@ -1,53 +1,7 @@
 from enum import Enum
 from abc import ABC, abstractmethod
 from sensor_units import TemperatureUnit, RelativeHumidityUnit, PressureUnit, DistanceUnit, TimeUnit, UnitType
-
-class Colour(Enum):
-    RED = ("Red", "\033[91m")
-    GREEN = ("Green", "\033[92m")
-    YELLOW = ("Yellow", "\033[93m")
-    BLUE = ("Blue", "\033[94m")
-    MAGENTA = ("Magenta", "\033[95m")
-    CYAN = ("Cyan", "\033[96m")
-    WHITE = ("White", "\033[97m")
-    ORANGE = ("Orange", "\033[38;5;208m")
-    PURPLE = ("Purple", "\033[38;5;141m")
-    GREY = ("Grey", "\033[90m")
-    RESET = ("Reset", "\033[0m")
-
-    def getCode(self):
-        return self.value[1]
-
-class PrintUtil:
-    @staticmethod
-    def printMessage(message: str, colour: Colour) -> None:
-        print(f"{colour.getCode()}{message}{Colour.RESET.getCode()}")
-
-    @staticmethod
-    def printTitle(title: str, colour: Colour) -> None:
-        print("=" * 50)
-        print(f"{colour.getCode()}{title}{Colour.RESET.getCode()}")
-        print("=" * 50)
-
-    @staticmethod
-    def printWarning(message: str) -> None:
-        PrintUtil.printMessage(message, Colour.YELLOW)
-
-    @staticmethod
-    def printException(message: str) -> None:
-        PrintUtil.printMessage(message, Colour.ORANGE)
-
-    @staticmethod
-    def printError(message: str) -> None:
-        PrintUtil.printMessage(message, Colour.RED)
-
-    @staticmethod
-    def printSuccess(message: str) -> None:
-        PrintUtil.printMessage(message, Colour.GREEN)
-
-    @staticmethod
-    def printInfo(message: str) -> None:
-        PrintUtil.printMessage(message, Colour.BLUE)
+from sensor_utility import Colour, SensorIO
 
 class MeasurementType(Enum):
     Temperature = ("Temperature", "T", 1)
@@ -76,6 +30,12 @@ class MeasurementBase(ABC):
         self.burstValues = []
         self.avgBurstValue = 0.0
 
+    def getType(self) -> MeasurementType:
+        return self.type
+
+    def getUnit(self) -> UnitType:
+        return self.unit
+
     def setValue(self, value: float, isBurst: bool) -> None:
         if isBurst:
             self.burstValues.append(value)
@@ -97,6 +57,17 @@ class MeasurementBase(ABC):
                 convertedValues.append((self.unit.convert_value(value, unitType), unitType))
             return convertedValues
 
+    def getAverageBurstValue(self, unitType: UnitType = None) -> float:
+        if len(self.burstValues) == 0:
+            return 0.0
+        if unitType is None:
+            return sum(self.burstValues) / len(self.burstValues)
+        else:
+            convertedValues = []
+            for value in self.burstValues:
+                convertedValues.append(self.unit.convert_value(value, unitType))
+            return sum(convertedValues) / len(convertedValues)
+
     def resetBurstValues(self) -> None:
         self.burstValues = []
 
@@ -106,7 +77,7 @@ class MeasurementBase(ABC):
         string = f"{unit.getSymbol()}" if useSymbol else f"{unit.getType().getSymbol()}"
         label = f"{self.type.getName()}"
         formatted_output = f"{label:<20} : {value:>10.2f}  [{string:<4}]"
-        PrintUtil.printMessage(formatted_output, self.colour)
+        SensorIO.printMessage(formatted_output, self.colour)
 
     
     def printBurstValues(self, unitType: UnitType = None, useSymbol: bool = False, printArray: bool = True) -> None:
@@ -121,7 +92,7 @@ class MeasurementBase(ABC):
             formatted_output = f"{label:<20} : {average:>10.2f}  [{string:<4}] {values}"
         else:
             formatted_output = f"{label:<20} : {average:>10.2f}  [{string:<4}]"
-        PrintUtil.printMessage(formatted_output, self.colour)
+        SensorIO.printMessage(formatted_output, self.colour)
 
 class Temperature(MeasurementBase):
     def __init__(self):

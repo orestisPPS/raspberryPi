@@ -7,21 +7,16 @@ import board
 
 
 def main():
-    dht11 = DHT11(board.D21)
-    dht22 = DHT22(board.D17)
-    bme280 = BME280()
-    # shtc3 = SHTC3()
-
+    sensors = {
+        "DHT11": DHT11(board.D21),
+        "DHT22": DHT22(board.D17),
+        "BME280": BME280()
+        # "SHTC3": SHTC3()
+    }
     while True:
-        # dht11.measure(consolePrint=True, useSymbol=False)
-        # dht22.measure(consolePrint=True, useSymbol=False)
-        # bme280.measure(consolePrint=True, useSymbol=False)
-        dht11.burstMeasure(consolePrint=True, useSymbol=False)
-        dht22.burstMeasure(consolePrint=True, useSymbol=False)
-        bme280.burstMeasure(consolePrint=True, useSymbol=False)
-        # shtc3.measure(True, True)
-        time.sleep(1)
- 
+        for sensor in sensors.values():
+            sensor.measure(burstNum=5, burstInterval=2, burstDelay=10, exportToCSV=True)
 
 if __name__ == "__main__":
     main()
+

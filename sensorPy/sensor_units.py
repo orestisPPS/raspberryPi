@@ -51,6 +51,12 @@ class UnitBase(ABC):
 
     def getType(self) -> UnitType:
         return self._type
+    
+    def getSymbol(self) -> str:
+        return self._type.getSymbol()
+    
+    def getName(self) -> str:
+        return self._type.getName()
 
     @abstractmethod
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:
@@ -61,6 +67,7 @@ class UnitBase(ABC):
     
 class TemperatureUnit(UnitBase):
     def __init__(self):
+        super().__init__() 
         self._type = UnitType.Celsius
 
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:
@@ -75,6 +82,7 @@ class TemperatureUnit(UnitBase):
 
 class RelativeHumidityUnit(UnitBase):
     def __init__(self):
+        super().__init__() 
         self._type = UnitType.Percent
 
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:
@@ -85,6 +93,7 @@ class RelativeHumidityUnit(UnitBase):
 
 class PressureUnit(UnitBase):
     def __init__(self):
+        super().__init__() 
         self._type = UnitType.Hectopascal
 
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:
@@ -109,6 +118,7 @@ class PressureUnit(UnitBase):
 
 class DistanceUnit(UnitBase):
     def __init__(self):
+        super().__init__() 
         self._type = UnitType.Meter
 
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:
@@ -131,6 +141,7 @@ class DistanceUnit(UnitBase):
 
 class TimeUnit(UnitBase):
     def __init__(self):
+        super().__init__() 
         self._type = UnitType.Second
 
     def convert_value(self, value: float, target_unit: UnitType) -> tuple:

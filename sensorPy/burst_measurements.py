@@ -1,7 +1,7 @@
 import time
-from dht11.SensorDHT11 import DHT11
-from dht22.SensorDHT22 import DHT22
-from bme280.sensor_bme280 import BME280
+from DHT11.sensor_dht11 import DHT11
+from DHT22.sensor_dht22 import DHT22
+from BME280.sensor_bme280 import BME280
 # from shtc3.SensorSHTC3 import SHTC3it, PressureUnit, RelativeHumidityUnit, DistanceUnit, TimeUnit, Temperature, Pressure, RelativeHumidity, Distance, Time
 import board
 

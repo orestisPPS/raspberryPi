@@ -1,6 +1,7 @@
 from enum import Enum
 import os
 import time
+from collections.abc import Iterable
 
 class Colour(Enum):
     RED = ("Red", "\033[91m")
@@ -61,39 +62,33 @@ class SensorIO:
     @staticmethod
     def printInfo(message: str) -> None:
         SensorIO.printMessage(message, Colour.BLUE)
-    
+
     @staticmethod
-    def exportToCSV(sensorName: str, measurementNames: list,
-                    measurementData: list, units: list, path: str = None) -> None:
+    def exportToCSV(sensorName: str, measurementNames: list, measurementData: list, units: list, path: str = None) -> None:
         print_util = SensorIO()
         
         if len(measurementNames) != len(measurementData) or len(measurementNames) != len(units):
             print_util.printError("ERROR: Argument length mismatch - Measurement names, data, and units must have the same length.")
             return
-
         if path is None:
             path = os.path.join(os.getcwd(), sensorName, "data")
-        
         if not os.path.exists(path):
             os.makedirs(path)
             print_util.printMessage(f"Directory created successfully: {path}", Colour.DARK_GREY)
         
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        file_path = os.path.join(path, f"{time.strftime('%Y%m%d')}.csv")
-        
+        day = time.strftime("%Y_%m_%d")
+        dateTime = time.strftime("%H:%M:%S")
+        file_path = os.path.join(path, f"{sensorName}_{day}.csv")
         if not os.path.isfile(file_path):
             with open(file_path, 'w') as file:
-                header = ",".join([f"{name} [{unit}]" for name, unit in zip(measurementNames, units)]) + "\n"
+                header = "timestamp," + ",".join([f"{name}[{unit}]" for name, unit in zip(measurementNames, units)]) + "\n"
                 file.write(header)
-                print_util.printMessage(f"New file created: {file_path}", Colour.DARK_GREY)
-                for data in measurementData:
-                    line = ",".join([value for value in data]) + "\n"
-                    file.write(line)
-                print_util.printMessage(f"Data successfully written to {file_path}.", Colour.DARK_GREY)
-        else:
-            with open(file_path, 'a') as file:
-                for data in measurementData:
-                    line = ",".join([str(value) for value in data]) + "\n"
-                    file.write(line)
-                print_util.printMessage(f"Data successfully appended to {file_path}.", Colour.DARK_GREY)
-
+            print_util.printMessage(f"New file created: {file_path}", Colour.DARK_GREY)       
+        with open(file_path, 'a') as file:
+            # Ensure data is iterable
+            if not isinstance(measurementData, Iterable):
+                measurementData = [measurementData]  # Wrap it in a list if it's not iterable
+            # Flatten the data into a single line
+            line = f"{dateTime}," + ",".join([f"{float(value):.2f}" for value in measurementData]) + "\n"
+            file.write(line)
+            print_util.printMessage(f"Data successfully appended to {file_path}.", Colour.DARK_GREY)

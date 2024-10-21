@@ -14,7 +14,6 @@ class Sensor(ABC):
     def measure(self, unitType: UnitType = None, burstNum: int = 1, burstInterval: float = 2.0,
                 burstDelay: float = 30, printArray: bool = False,
                 consolePrint: bool = True, useSymbol: bool = False, exportToCSV: bool = False, csvPath: str = None) -> None:
-        
         self._checkMeasureInput(burstNum, burstInterval, burstDelay)
         if consolePrint: 
             SensorIO.printTitle(self.name, self.colour)
@@ -29,6 +28,8 @@ class Sensor(ABC):
                 SensorIO.printError(f"Runtime Error reading from sensor {self.name}: {error}")
             except Exception as error:
                SensorIO.printError(f"Unexpected error from sensor {self.name}: {error}")
+            if isBurst and i < burstNum - 1:
+                time.sleep(burstInterval)
         if consolePrint:
             for measurement in self.measurements:
                 if isBurst:
@@ -41,6 +42,7 @@ class Sensor(ABC):
 
         for measurement in self.measurements:
                 measurement.resetBurstValues()
+        time.sleep(burstDelay)
         
 
     @abstractmethod
@@ -65,8 +67,9 @@ class Sensor(ABC):
         for measurement in self.measurements:
             names.append(measurement.getType().getSymbol())
             if isBurst:
-                data.append(str(measurement.getAverageBurstValue()))
+                data.append(measurement.getAverageBurstValue())
             else:
-                data.append(str(measurement.getValue()))
+                data.append(measurement.getValue())
             units.append(measurement.getUnit().getSymbol())
+        print(names, data, units)
         SensorIO.exportToCSV(self.name, names, data, units, path)
